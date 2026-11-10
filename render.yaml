@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: airguard-ai
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: "pip install -r backend/requirements.txt && cd frontend && npm install && npm run build"
+    startCommand: "python start_server.py"
+    envVars:
+      - key: PORT
+        value: 8000
