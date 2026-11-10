@@ -1,0 +1,524 @@
+{
+  "training_timestamp": "2026-11-10T19:50:03.424641",
+  "total_records": 34568,
+  "horizons": [
+    6,
+    12,
+    24
+  ],
+  "pollutants": [
+    "pm25",
+    "pm10",
+    "no2",
+    "so2",
+    "co",
+    "o3"
+  ],
+  "evaluation_metrics": {
+    "pm25": {
+      "h6": {
+        "mae": 6.31,
+        "rmse": 8.65,
+        "r2": 0.944,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27462,
+        "test_samples": 6866
+      },
+      "h12": {
+        "mae": 6.74,
+        "rmse": 9.57,
+        "r2": 0.931,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27424,
+        "test_samples": 6856
+      },
+      "h24": {
+        "mae": 7.33,
+        "rmse": 10.59,
+        "r2": 0.916,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27347,
+        "test_samples": 6837
+      }
+    },
+    "pm10": {
+      "h6": {
+        "mae": 10.62,
+        "rmse": 13.56,
+        "r2": 0.953,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27462,
+        "test_samples": 6866
+      },
+      "h12": {
+        "mae": 12.82,
+        "rmse": 17.19,
+        "r2": 0.925,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27424,
+        "test_samples": 6856
+      },
+      "h24": {
+        "mae": 14.1,
+        "rmse": 19.43,
+        "r2": 0.905,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27347,
+        "test_samples": 6837
+      }
+    },
+    "no2": {
+      "h6": {
+        "mae": 4.37,
+        "rmse": 5.52,
+        "r2": 0.579,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27462,
+        "test_samples": 6866
+      },
+      "h12": {
+        "mae": 4.59,
+        "rmse": 5.8,
+        "r2": 0.535,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27424,
+        "test_samples": 6856
+      },
+      "h24": {
+        "mae": 4.71,
+        "rmse": 6.0,
+        "r2": 0.503,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27347,
+        "test_samples": 6837
+      }
+    },
+    "so2": {
+      "h6": {
+        "mae": 1.54,
+        "rmse": 1.98,
+        "r2": 0.298,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27462,
+        "test_samples": 6866
+      },
+      "h12": {
+        "mae": 1.63,
+        "rmse": 2.09,
+        "r2": 0.226,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27424,
+        "test_samples": 6856
+      },
+      "h24": {
+        "mae": 1.64,
+        "rmse": 2.08,
+        "r2": 0.231,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27347,
+        "test_samples": 6837
+      }
+    },
+    "co": {
+      "h6": {
+        "mae": 0.13,
+        "rmse": 0.17,
+        "r2": 0.912,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27462,
+        "test_samples": 6866
+      },
+      "h12": {
+        "mae": 0.14,
+        "rmse": 0.19,
+        "r2": 0.894,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27424,
+        "test_samples": 6856
+      },
+      "h24": {
+        "mae": 0.15,
+        "rmse": 0.2,
+        "r2": 0.882,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27347,
+        "test_samples": 6837
+      }
+    },
+    "o3": {
+      "h6": {
+        "mae": 3.06,
+        "rmse": 3.82,
+        "r2": 0.964,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27462,
+        "test_samples": 6866
+      },
+      "h12": {
+        "mae": 3.1,
+        "rmse": 3.89,
+        "r2": 0.963,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27424,
+        "test_samples": 6856
+      },
+      "h24": {
+        "mae": 3.2,
+        "rmse": 4.04,
+        "r2": 0.96,
+        "model_type": "RandomForestRegressor",
+        "features_count": 27,
+        "train_samples": 27347,
+        "test_samples": 6837
+      }
+    }
+  },
+  "model_comparison": {
+    "pm25_h6": {
+      "random_forest": {
+        "mae": 6.31,
+        "rmse": 8.65,
+        "r2": 0.944
+      },
+      "gradient_boosting": {
+        "mae": 6.03,
+        "rmse": 8.17,
+        "r2": 0.95
+      }
+    },
+    "pm10_h6": {
+      "random_forest": {
+        "mae": 10.62,
+        "rmse": 13.56,
+        "r2": 0.953
+      },
+      "gradient_boosting": {
+        "mae": 10.21,
+        "rmse": 12.96,
+        "r2": 0.958
+      }
+    },
+    "no2_h6": {
+      "random_forest": {
+        "mae": 4.37,
+        "rmse": 5.52,
+        "r2": 0.579
+      },
+      "gradient_boosting": {
+        "mae": 4.22,
+        "rmse": 5.32,
+        "r2": 0.609
+      }
+    }
+  },
+  "feature_importances": {
+    "pm25": [
+      {
+        "feature": "pm25_roll_mean_24h",
+        "importance": 0.7475
+      },
+      {
+        "feature": "cos_month",
+        "importance": 0.082
+      },
+      {
+        "feature": "sin_month",
+        "importance": 0.0743
+      },
+      {
+        "feature": "temperature",
+        "importance": 0.0277
+      },
+      {
+        "feature": "humidity",
+        "importance": 0.0108
+      },
+      {
+        "feature": "pm25",
+        "importance": 0.0108
+      },
+      {
+        "feature": "cos_hour",
+        "importance": 0.0096
+      },
+      {
+        "feature": "pm10",
+        "importance": 0.0051
+      },
+      {
+        "feature": "no2",
+        "importance": 0.003
+      },
+      {
+        "feature": "pm25_roll_std_12h",
+        "importance": 0.0029
+      }
+    ],
+    "pm10": [
+      {
+        "feature": "pm10_roll_mean_24h",
+        "importance": 0.6419
+      },
+      {
+        "feature": "pm25",
+        "importance": 0.1622
+      },
+      {
+        "feature": "pm10",
+        "importance": 0.1462
+      },
+      {
+        "feature": "temperature_lag1",
+        "importance": 0.0061
+      },
+      {
+        "feature": "temperature",
+        "importance": 0.0044
+      },
+      {
+        "feature": "humidity",
+        "importance": 0.0036
+      },
+      {
+        "feature": "cos_hour",
+        "importance": 0.0035
+      },
+      {
+        "feature": "sin_month",
+        "importance": 0.003
+      },
+      {
+        "feature": "o3",
+        "importance": 0.0028
+      },
+      {
+        "feature": "cos_month",
+        "importance": 0.0027
+      }
+    ],
+    "no2": [
+      {
+        "feature": "temperature",
+        "importance": 0.3327
+      },
+      {
+        "feature": "no2_roll_mean_24h",
+        "importance": 0.243
+      },
+      {
+        "feature": "no2",
+        "importance": 0.0551
+      },
+      {
+        "feature": "cos_hour",
+        "importance": 0.0451
+      },
+      {
+        "feature": "sin_hour",
+        "importance": 0.0262
+      },
+      {
+        "feature": "pm10",
+        "importance": 0.0227
+      },
+      {
+        "feature": "humidity",
+        "importance": 0.0224
+      },
+      {
+        "feature": "o3",
+        "importance": 0.0203
+      },
+      {
+        "feature": "no2_roll_mean_6h",
+        "importance": 0.0201
+      },
+      {
+        "feature": "no2_roll_std_12h",
+        "importance": 0.0192
+      }
+    ],
+    "so2": [
+      {
+        "feature": "temperature",
+        "importance": 0.2799
+      },
+      {
+        "feature": "so2",
+        "importance": 0.1126
+      },
+      {
+        "feature": "temperature_lag1",
+        "importance": 0.0433
+      },
+      {
+        "feature": "o3",
+        "importance": 0.0424
+      },
+      {
+        "feature": "so2_roll_mean_24h",
+        "importance": 0.0403
+      },
+      {
+        "feature": "so2_roll_std_12h",
+        "importance": 0.0371
+      },
+      {
+        "feature": "no2",
+        "importance": 0.0365
+      },
+      {
+        "feature": "pm10",
+        "importance": 0.0355
+      },
+      {
+        "feature": "wind_direction",
+        "importance": 0.0342
+      },
+      {
+        "feature": "wind_speed_lag6",
+        "importance": 0.0324
+      }
+    ],
+    "co": [
+      {
+        "feature": "cos_month",
+        "importance": 0.7936
+      },
+      {
+        "feature": "sin_month",
+        "importance": 0.0831
+      },
+      {
+        "feature": "temperature",
+        "importance": 0.0329
+      },
+      {
+        "feature": "co",
+        "importance": 0.0104
+      },
+      {
+        "feature": "cos_hour",
+        "importance": 0.0083
+      },
+      {
+        "feature": "humidity",
+        "importance": 0.0077
+      },
+      {
+        "feature": "co_roll_mean_24h",
+        "importance": 0.005
+      },
+      {
+        "feature": "temperature_lag1",
+        "importance": 0.0046
+      },
+      {
+        "feature": "co_roll_std_12h",
+        "importance": 0.0044
+      },
+      {
+        "feature": "co_roll_mean_6h",
+        "importance": 0.0041
+      }
+    ],
+    "o3": [
+      {
+        "feature": "o3_lag6",
+        "importance": 0.6682
+      },
+      {
+        "feature": "o3_roll_std_12h",
+        "importance": 0.1182
+      },
+      {
+        "feature": "sin_hour",
+        "importance": 0.0859
+      },
+      {
+        "feature": "cos_month",
+        "importance": 0.0467
+      },
+      {
+        "feature": "cos_hour",
+        "importance": 0.0379
+      },
+      {
+        "feature": "o3",
+        "importance": 0.0131
+      },
+      {
+        "feature": "sin_month",
+        "importance": 0.0047
+      },
+      {
+        "feature": "no2",
+        "importance": 0.0026
+      },
+      {
+        "feature": "humidity",
+        "importance": 0.0023
+      },
+      {
+        "feature": "temperature_lag1",
+        "importance": 0.0021
+      }
+    ]
+  },
+  "shap_summary": {
+    "pm25_h6": {
+      "expected_value": 37.888768844221104,
+      "top_factors": [
+        {
+          "factor": "pm25_roll_mean_24h",
+          "mean_shap_value": 20.01
+        },
+        {
+          "factor": "cos_month",
+          "mean_shap_value": 2.97
+        },
+        {
+          "factor": "pm25",
+          "mean_shap_value": 2.717
+        },
+        {
+          "factor": "sin_month",
+          "mean_shap_value": 2.415
+        },
+        {
+          "factor": "cos_hour",
+          "mean_shap_value": 1.953
+        },
+        {
+          "factor": "temperature",
+          "mean_shap_value": 1.827
+        },
+        {
+          "factor": "pm10",
+          "mean_shap_value": 0.705
+        },
+        {
+          "factor": "humidity",
+          "mean_shap_value": 0.637
+        }
+      ]
+    }
+  }
+}
