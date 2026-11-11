@@ -1,7 +1,8 @@
 """
 AirGuard AI — FastAPI RESTful Backend
 Implements the shared forecasting engine, CPCB AQI calculation, SHAP explainability,
-and independent decision-support pipelines for government authorities and citizens.
+real-time multi-provider data ingestion, and independent decision-support pipelines
+for government authorities and citizens.
 """
 
 import os
@@ -22,9 +23,13 @@ from src.database.db import (
     get_authority_actions,
     create_or_update_action,
     get_active_alerts,
-    get_connection
+    get_connection,
+    get_latest_observation,
+    get_all_latest_observations,
+    get_observations_history
 )
 from src.data.generate_dataset import STATIONS
+from src.data.realtime_pipeline import get_realtime_pipeline
 from src.aqi.cpcb_calculator import calculate_composite_aqi, calculate_sub_index, CATEGORIES
 from src.recommendations.authority_rules import generate_authority_recommendations
 from src.recommendations.citizen_rules import generate_citizen_advisory, VULNERABILITY_PROFILES
@@ -37,9 +42,10 @@ app = FastAPI(
     title="AirGuard AI — Explainable Air Quality Forecasting & Decision Support API",
     description=(
         "Dual-stakeholder decision support framework powered by Random Forest multi-horizon forecasting, "
-        "official Indian National AQI (CPCB) breakpoint formulations, and SHAP explainability."
+        "real-time multi-provider telemetry, official Indian National AQI (CPCB) breakpoint formulations, "
+        "and SHAP explainability."
     ),
-    version="1.0.0"
+    version="1.1.0"
 )
 
 # CORS middleware for local frontend connectivity
@@ -70,7 +76,7 @@ class AuthorityActionCreate(BaseModel):
     post_intervention_aqi: Optional[float] = None
     evaluation_notes: Optional[str] = ""
 
-# ── Pre-seed sample historical authority actions ──────────────────────────────
+# ── Pre-seed sample historical authority actions & alerts ─────────────────────
 def seed_initial_actions_and_alerts():
     conn = get_connection()
     cursor = conn.cursor()
@@ -168,10 +174,36 @@ async def on_startup():
     seed_initial_actions_and_alerts()
     # Warm up forecast engine
     get_forecast_engine()
+    # Initialize realtime pipeline
+    try:
+        pipeline = get_realtime_pipeline()
+        pipeline.sync_all_stations(persist_to_db=True)
+        logger.info(f"Realtime pipeline initialized with provider: {pipeline.detect_active_provider()}")
+    except Exception as e:
+        logger.warning(f"Could not perform startup real-time sync: {e}")
     logger.info("AirGuard AI Backend initialized successfully.")
 
-# ── Helper to retrieve latest observations from CSV / DB ──────────────────────
+# ── Helper to retrieve latest observations from Real-time Cache / DB / CSV ──
 def get_station_latest_observation(station_id: str) -> Dict[str, Any]:
+    """
+    Tiered observation retriever:
+    1. Check real-time pipeline in-memory cache
+    2. Check SQLite observations table
+    3. Check historical CSV dataset
+    4. Physics-informed default baseline
+    """
+    # 1. Realtime cache
+    pipeline = get_realtime_pipeline()
+    cached = pipeline.get_cached_observation(station_id)
+    if cached:
+        return cached
+
+    # 2. SQLite DB
+    db_obs = get_latest_observation(station_id)
+    if db_obs:
+        return db_obs
+
+    # 3. CSV Dataset
     csv_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "cpcb_delhi_air_quality.csv")
     if os.path.exists(csv_file):
         try:
@@ -181,9 +213,9 @@ def get_station_latest_observation(station_id: str) -> Dict[str, Any]:
                 last_row = station_rows.iloc[-1].to_dict()
                 return last_row
         except Exception as e:
-            logger.error(f"Error reading latest observation: {e}")
-            
-    # Default physics baseline if CSV is reading
+            logger.error(f"Error reading latest observation from CSV: {e}")
+
+    # 4. Default physics baseline
     st = next((s for s in STATIONS if s["station_id"] == station_id), STATIONS[0])
     return {
         "timestamp": datetime.now().strftime("%Y-%m-%d %H:00:00"),
@@ -202,7 +234,8 @@ def get_station_latest_observation(station_id: str) -> Dict[str, Any]:
         "humidity": 58.0,
         "wind_speed": 2.1,
         "wind_direction": 280.0,
-        "rainfall": 0.0
+        "rainfall": 0.0,
+        "data_source": "PHYSICAL_BASELINE"
     }
 
 # ── API Endpoints ─────────────────────────────────────────────────────────────
@@ -210,6 +243,7 @@ def get_station_latest_observation(station_id: str) -> Dict[str, Any]:
 @app.get("/api/health")
 def health_check():
     engine = get_forecast_engine()
+    pipeline = get_realtime_pipeline()
     models_loaded = sum(len(v) for v in engine.models.values())
     return {
         "status": "healthy",
@@ -217,7 +251,12 @@ def health_check():
         "timestamp": datetime.now().isoformat(),
         "models_loaded_count": models_loaded,
         "explainer_ready": engine.shap_explainer is not None,
-        "aqi_standard": "CPCB Indian National Air Quality Index (NAQI)"
+        "aqi_standard": "CPCB Indian National Air Quality Index (NAQI)",
+        "realtime_pipeline": {
+            "active_provider": pipeline.detect_active_provider(),
+            "last_sync": pipeline.last_sync_time,
+            "cached_stations": len(pipeline.cache)
+        }
     }
 
 @app.get("/api/locations")
@@ -227,6 +266,47 @@ def list_locations():
     if not stations:
         return STATIONS
     return stations
+
+# ── Real-Time Data Pipeline Endpoints ─────────────────────────────────────────
+
+@app.get("/api/realtime/status")
+def get_realtime_status():
+    """Returns real-time pipeline status, active providers, and API key configurations."""
+    pipeline = get_realtime_pipeline()
+    return pipeline.get_status()
+
+@app.post("/api/realtime/sync")
+def trigger_realtime_sync():
+    """
+    Triggers an immediate live sync across all 8 Delhi monitoring stations,
+    updating cache, persisting to SQLite, and refreshing predictions.
+    """
+    pipeline = get_realtime_pipeline()
+    synced = pipeline.sync_all_stations(persist_to_db=True)
+    return {
+        "status": "success",
+        "message": f"Successfully synchronized {len(synced)} stations in real time.",
+        "provider": pipeline.last_provider_used,
+        "timestamp": pipeline.last_sync_time,
+        "synced_stations": [s["station_name"] for s in synced]
+    }
+
+@app.get("/api/realtime/stations")
+def get_all_realtime_stations():
+    """Returns the latest live observations for all monitoring stations."""
+    pipeline = get_realtime_pipeline()
+    return pipeline.get_all_cached_observations()
+
+@app.get("/api/realtime/station/{station_id}")
+def get_station_realtime(station_id: str):
+    """Returns the latest real-time observation and sub-indices for a specific station."""
+    pipeline = get_realtime_pipeline()
+    obs = pipeline.get_cached_observation(station_id)
+    if not obs:
+        obs = get_station_latest_observation(station_id)
+    return obs
+
+# ── Air Quality Observation Endpoints ─────────────────────────────────────────
 
 @app.get("/api/air-quality/current")
 def get_current_air_quality(station_id: Optional[str] = None):
@@ -274,7 +354,7 @@ def get_current_air_quality(station_id: Optional[str] = None):
             "dominant_pollutant": aqi_data["dominant_pollutant"],
             "sub_indices": aqi_data["sub_indices"],
             "is_valid_cpcb": aqi_data["valid_cpcb"],
-            "data_mode": "CPCB Delhi Observation"
+            "data_source": obs.get("data_source", "CPCB Delhi Observation")
         })
         
     return results[0] if (station_id and len(results) == 1) else results
@@ -282,6 +362,12 @@ def get_current_air_quality(station_id: Optional[str] = None):
 @app.get("/api/air-quality/history")
 def get_air_quality_history(station_id: str = "DEL_AV_01", limit: int = 48):
     """Returns chronological recent hourly observations for time-series charts."""
+    # 1. First check SQLite DB observations
+    db_history = get_observations_history(station_id, limit=limit)
+    if len(db_history) >= 12:
+        return db_history
+
+    # 2. Fallback to historical CSV
     csv_file = os.path.join(os.path.dirname(__file__), "..", "..", "data", "cpcb_delhi_air_quality.csv")
     if os.path.exists(csv_file):
         try:
@@ -302,16 +388,15 @@ def get_air_quality_history(station_id: str = "DEL_AV_01", limit: int = 48):
                 records.append(rec)
             return records
         except Exception as e:
-            logger.error(f"Error reading history: {e}")
+            logger.error(f"Error reading history from CSV: {e}")
             
-    # Mock fallback
-    return []
+    return db_history
 
 @app.get("/api/predictions/aqi")
 def get_aqi_predictions(station_id: str = "DEL_AV_01"):
     """
     Returns multi-horizon predictions (6h, 12h, 24h) for composite AQI and criteria pollutants
-    generated by the shared Random Forest forecasting engine.
+    generated by the shared Random Forest forecasting engine based on current telemetry.
     """
     obs = get_station_latest_observation(station_id)
     engine = get_forecast_engine()
@@ -521,4 +606,3 @@ def serve_spa(full_path: str):
     if os.path.exists(index_file):
         return FileResponse(index_file)
     return {"message": "AirGuard AI API running. Frontend dist not found."}
-

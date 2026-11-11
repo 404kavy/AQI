@@ -5,15 +5,27 @@ pollutant prediction (6h, 12h, 24h) using chronological splitting and SHAP expla
 """
 
 import os
+import sys
 import json
 import joblib
 import pandas as pd
 import numpy as np
 from datetime import datetime
+
+# Ensure backend root is in sys.path
+BACKEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
+
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from typing import List, Dict, Any, Tuple
-import shap
+
+try:
+    import shap
+    HAS_SHAP = True
+except ImportError:
+    HAS_SHAP = False
 
 from src.ml.feature_engineering import (
     POLLUTANTS,
@@ -159,26 +171,27 @@ def train_and_evaluate(data_path: str, quick_mode: bool = False):
             
             # SHAP Explainability for PM2.5 horizon 6 (most critical)
             if pol == "pm25" and h == 6:
-                print("  Computing SHAP TreeExplainer attributions for PM2.5...")
-                try:
-                    # Sample 150 instances for fast representative SHAP computation
-                    sample_X = X_test.sample(n=min(150, len(X_test)), random_state=42)
-                    explainer = shap.TreeExplainer(rf_model)
-                    shap_values = explainer.shap_values(sample_X)
-                    
-                    mean_abs_shap = np.abs(shap_values).mean(axis=0)
-                    shap_rankings = sorted(zip(feature_names, mean_abs_shap), key=lambda x: x[1], reverse=True)[:8]
-                    
-                    metadata["shap_summary"]["pm25_h6"] = {
-                        "expected_value": float(explainer.expected_value[0] if isinstance(explainer.expected_value, np.ndarray) else explainer.expected_value),
-                        "top_factors": [{"factor": f, "mean_shap_value": round(float(v), 3)} for f, v in shap_rankings]
-                    }
-                    
-                    # Persist explainer for runtime local explanations
-                    joblib.dump(explainer, os.path.join(MODELS_DIR, "shap_explainer_pm25_h6.joblib"))
-                    print("  SHAP Explainer successfully persisted.")
-                except Exception as e:
-                    print(f"  Warning during SHAP computation: {e}")
+                if HAS_SHAP:
+                    print("  Computing SHAP TreeExplainer attributions for PM2.5...")
+                    try:
+                        sample_X = X_test.sample(n=min(150, len(X_test)), random_state=42)
+                        explainer = shap.TreeExplainer(rf_model)
+                        shap_values = explainer.shap_values(sample_X)
+                        
+                        mean_abs_shap = np.abs(shap_values).mean(axis=0)
+                        shap_rankings = sorted(zip(feature_names, mean_abs_shap), key=lambda x: x[1], reverse=True)[:8]
+                        
+                        metadata["shap_summary"]["pm25_h6"] = {
+                            "expected_value": float(explainer.expected_value[0] if isinstance(explainer.expected_value, np.ndarray) else explainer.expected_value),
+                            "top_factors": [{"factor": f, "mean_shap_value": round(float(v), 3)} for f, v in shap_rankings]
+                        }
+                        
+                        joblib.dump(explainer, os.path.join(MODELS_DIR, "shap_explainer_pm25_h6.joblib"))
+                        print("  SHAP Explainer successfully persisted.")
+                    except Exception as e:
+                        print(f"  Warning during SHAP computation: {e}")
+                else:
+                    print("  SHAP not installed; skipping TreeExplainer computation. Install with: pip install shap")
     
     # Save feature names list
     with open(os.path.join(MODELS_DIR, "feature_names.json"), "w") as f:
