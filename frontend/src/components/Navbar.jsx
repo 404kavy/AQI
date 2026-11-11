@@ -6,10 +6,12 @@ import { fetchHealth } from '../services/api';
 export default function Navbar() {
   const location = useLocation();
   const path = location.pathname;
-  const [isLive, setIsLive] = useState(null);
+  const [healthInfo, setHealthInfo] = useState({ is_live: null, live_type: null });
 
   useEffect(() => {
-    fetchHealth().then(res => setIsLive(res.is_live === true)).catch(() => setIsLive(false));
+    fetchHealth()
+      .then(res => setHealthInfo(res))
+      .catch(() => setHealthInfo({ is_live: false, live_type: 'demo' }));
   }, []);
 
   const isAuth = path.startsWith('/authority');
@@ -30,13 +32,13 @@ export default function Navbar() {
                 <span className="text-xl font-black tracking-tight text-base-900">
                   AirGuard<span className="text-blue-600 font-extrabold">AI</span>
                 </span>
-                {isLive === true ? (
-                  <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                {healthInfo.is_live === true ? (
+                  <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1" title={healthInfo.live_type === 'direct' ? 'Live Direct CAAQMS Open-Meteo Ingestion' : 'Connected to Live Python ML Backend'}>
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    LIVE CAAQMS
+                    {healthInfo.live_type === 'direct' ? 'LIVE CAAQMS (DIRECT)' : 'LIVE CAAQMS (BACKEND)'}
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1" title="Offline Demo Simulation. Run start_server.py for live ML backend.">
+                  <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1" title="Offline Demo Simulation. Run python start_server.py for live ML backend.">
                     <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                     DEMO SIMULATION
                   </span>
